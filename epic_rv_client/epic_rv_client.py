@@ -1,16 +1,18 @@
 import requests
 import pyotp
 
+
 class EpicRvClient:
     """
     A Python client for authenticating and making requests to the EpicRv API.
-    
+
     Args:
         email (str): The email (username).
         password (str): The password.
         totp_secret (str, optional): The TOTP secret for 2FA.
         base_url (str, optional): Base URL for the API (default: https://api.twenty20solutions.com).
     """
+
     def __init__(self, email, password, totp_secret=None, base_url='https://api.twenty20solutions.com'):
         if not email or not password:
             raise ValueError("email and password are required")
@@ -32,7 +34,7 @@ class EpicRvClient:
         if not login_res.ok:
             msg = self._extract_error_message(login_res)
             raise Exception(f"Login failed. HTTP {login_res.status_code}: {msg}")
-        
+
         login_data = login_res.json()
         # 2) Check if two-factor authentication is required
         needs_2fa = login_data and login_data.get("code") == 1003
@@ -61,19 +63,19 @@ class EpicRvClient:
     def request(self, method, url, body=None, **options):
         """
         Generic request wrapper supporting all HTTP methods.
-        
+
         Args:
             method (str): HTTP method ('GET', 'POST', etc.).
             url (str): Relative or absolute URL.
             body (dict or str, optional): JSON body or string/bytes for request.
             **options: Additional options passed to requests.request.
-        
+
         Returns:
             Response: The response object from requests.
         """
         headers = options.pop("headers", {})
         full_url = url if url.startswith("http") else f"{self.base_url}{url}"
-        
+
         # If body is a dict, assume JSON
         if body is not None and isinstance(body, dict):
             headers.setdefault("Content-Type", "application/json")
@@ -103,3 +105,43 @@ class EpicRvClient:
 
     def options(self, url, **options):
         return self.request("OPTIONS", url, None, **options)
+
+    def update_equipment(self, equipment_id, external_ip=None, http_port=None, rtsp_port=None):
+        settings = {}
+        if external_ip:
+            settings["externalIp"] = external_ip
+        if http_port:
+            settings["httpAlt"] = int(http_port)
+            settings["externalPort"] = int(http_port)
+        if rtsp_port:
+            settings["rtspPort"] = int(rtsp_port)
+
+        if not settings:
+            return None
+
+        payload = {"settings": settings}
+        return self.put(f"/equipment/{equipment_id}", body=payload)
+
+    def update_rcu(self, rcu_id, external_ip=None, http_port=None):
+        # Fetch current RCU object to check kind
+        response = self.get(f"/rcu/{rcu_id}")
+        if not response.ok:
+            print(f"❌ Failed to fetch RCU {rcu_id}: {response.status_code}")
+            return response
+
+        rcu_data = response.json()
+        if rcu_data.get("kind", "PHYSICAL").upper() == "VIRTUAL":
+            print(f"⚠️  Skipping RCU {rcu_id} — it's a VIRTUAL RCU")
+            return None
+
+        payload = {}
+        if external_ip:
+            payload["ip"] = external_ip
+        if http_port:
+            payload["port"] = int(http_port)
+
+        if not payload:
+            print(f"⚠️  Nothing to update for RCU {rcu_id}")
+            return None
+
+        return self.put(f"/rcu/{rcu_id}", body=payload)

@@ -4,6 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
+epic-rv-client = {git = "https://github.com/twenty20solutions/epic-rv-client-python.git"}
 
 [dev-packages]
 requests = ">=2.32.3"
