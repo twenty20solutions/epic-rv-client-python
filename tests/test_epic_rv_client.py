@@ -1,5 +1,5 @@
-# test_epic_rv_client.py
 import os
+import pytest
 from dotenv import load_dotenv
 from epic_rv_client import EpicRvClient
 
@@ -12,23 +12,22 @@ TOTP_SECRET = os.getenv("TOTP_SECRET")
 EPIC_DOMAIN = os.getenv("EPIC_DOMAIN", "https://api.twenty20solutions.com")
 TEST_ENDPOINT = "/organization/00000001a01d1c4c9395f80b"
 
-def main():
+@pytest.mark.integration
+def test_auth_and_get_organization():
+    if not all([EMAIL, PASSWORD, TOTP_SECRET]):
+        pytest.skip("Missing credentials in environment variables")
+
     client = EpicRvClient(
         email=EMAIL,
         password=PASSWORD,
         totp_secret=TOTP_SECRET,
         base_url=EPIC_DOMAIN,
     )
-    
-    if client.authenticate():
-        response = client.get(TEST_ENDPOINT)
-        if response.ok:
-            data = response.json()
-            print("Organization Name:", data.get("name"))
-        else:
-            print("Request failed with status:", response.status_code)
-    else:
-        print("Authentication failed.")
 
-if __name__ == '__main__':
-    main()
+    assert client.authenticate(), "Authentication failed"
+
+    response = client.get(TEST_ENDPOINT)
+    assert response.ok, f"GET request failed: {response.status_code} - {response.text}"
+
+    data = response.json()
+    assert "name" in data, "Response missing 'name' field"

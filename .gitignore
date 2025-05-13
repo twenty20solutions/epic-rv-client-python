@@ -1,4 +1,56 @@
-__pycache__
+# Bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment folders
+.env/
+.venv/
+venv/
+env/
+
+# Pipenv files
+Pipfile.lock
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Test artifacts
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.noseids
+
+# IDE files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs and dumps
+*.log
+*.pot~
+*.swp
+*.bak
+
+# Secrets (make sure real secrets aren't in the repo)
 .env
 
-.idea/
+# Python profiler output
+*.prof
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# macOS extended attributes metadata
+*.AppleDouble
+*.LSOverride
+
+# VSCode Python config
+.python-version
